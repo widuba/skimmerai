@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Study Skimmer",
+  "version": "1.0.0",
+  "description": "Paste text and get a skimmed study summary using the OpenAI API.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://api.openai.com/*"],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
