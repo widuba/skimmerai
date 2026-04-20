@@ -4,7 +4,7 @@ const statusEl = document.getElementById("status");
 const outputEl = document.getElementById("output");
 
 // Paste your Hugging Face token here
-const HF_API_KEY = "PASTE_YOUR_HF_TOKEN_HERE";
+const HF_API_KEY = "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";
 
 // Recommended summarization model
 const MODEL_ID = "facebook/bart-large-cnn";
