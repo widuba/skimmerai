@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      width: 380px;
+      width: 400px;
       margin: 0;
       padding: 16px;
       box-sizing: border-box;
@@ -27,22 +27,19 @@
       margin: 12px 0 6px;
     }
 
-    input, textarea, button {
+    textarea, button {
       width: 100%;
       box-sizing: border-box;
       font: inherit;
     }
 
-    input, textarea {
+    textarea {
       border: 1px solid #cccccc;
       border-radius: 8px;
       padding: 10px;
       background: #fff;
-    }
-
-    textarea {
       resize: vertical;
-      min-height: 120px;
+      min-height: 150px;
     }
 
     button {
@@ -61,16 +58,6 @@
       cursor: not-allowed;
     }
 
-    .row {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .row button {
-      margin-top: 0;
-    }
-
     #status {
       margin-top: 10px;
       font-size: 12px;
@@ -87,23 +74,15 @@
       background: #fafafa;
     }
 
-    .hint {
+    .note {
+      margin-top: 10px;
       font-size: 12px;
       color: #555;
-      margin-top: 8px;
     }
   </style>
 </head>
 <body>
   <h1>Study Skimmer</h1>
-
-  <label for="apiKey">OpenAI API Key</label>
-  <input id="apiKey" type="password" placeholder="sk-..." />
-
-  <div class="row">
-    <button id="saveKey">Save Key</button>
-    <button id="clearKey" type="button">Clear Key</button>
-  </div>
 
   <label for="userText">Paste text to skim</label>
   <textarea id="userText" placeholder="Paste your study text here..."></textarea>
@@ -115,9 +94,7 @@
   <label for="output">Skimmed result</label>
   <div id="output"></div>
 
-  <div class="hint">
-    This version sends requests directly from the extension.
-  </div>
+  <div class="note">Put your Hugging Face token directly into popup.js.</div>
 
   <script src="popup.js"></script>
 </body>
