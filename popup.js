@@ -1,12 +1,16 @@
-const apiKeyInput = document.getElementById("apiKey");
 const userTextInput = document.getElementById("userText");
-const saveKeyBtn = document.getElementById("saveKey");
-const clearKeyBtn = document.getElementById("clearKey");
 const skimBtn = document.getElementById("skimBtn");
 const statusEl = document.getElementById("status");
 const outputEl = document.getElementById("output");
 
-const MODEL = "gpt-5.4";
+// Paste your Hugging Face token here
+const HF_API_KEY = "PASTE_YOUR_HF_TOKEN_HERE";
+
+// Recommended summarization model
+const MODEL_ID = "facebook/bart-large-cnn";
+
+// Router endpoint for HF Inference
+const API_URL = `https://router.huggingface.co/hf-inference/models/${MODEL_ID}`;
 
 const PROMPT_PREFIX =
   "I am studying and need help to skim the text I am about to provide. " +
@@ -24,58 +28,17 @@ function setLoading(isLoading) {
   skimBtn.textContent = isLoading ? "Skimming..." : "Skim Text";
 }
 
-async function getStoredApiKey() {
-  const result = await chrome.storage.local.get(["openai_api_key"]);
-  return result.openai_api_key || "";
-}
-
-async function setStoredApiKey(key) {
-  await chrome.storage.local.set({ openai_api_key: key });
-}
-
-async function clearStoredApiKey() {
-  await chrome.storage.local.remove("openai_api_key");
-}
-
-async function loadSavedKey() {
-  const savedKey = await getStoredApiKey();
-  if (savedKey) {
-    apiKeyInput.value = savedKey;
-    setStatus("Saved API key loaded.");
-  }
-}
-
-saveKeyBtn.addEventListener("click", async () => {
-  const key = apiKeyInput.value.trim();
-
-  if (!key) {
-    setStatus("Enter an API key first.", true);
-    return;
-  }
-
-  await setStoredApiKey(key);
-  setStatus("API key saved locally in the extension.");
-});
-
-clearKeyBtn.addEventListener("click", async () => {
-  await clearStoredApiKey();
-  apiKeyInput.value = "";
-  setStatus("Saved API key cleared.");
-});
-
-skimBtn.addEventListener("click", async () => {
-  const apiKey = apiKeyInput.value.trim();
+async function skimText() {
   const pastedText = userTextInput.value.trim();
-
   outputEl.textContent = "";
 
-  if (!apiKey) {
-    setStatus("Please enter your OpenAI API key.", true);
+  if (!HF_API_KEY || HF_API_KEY === "PASTE_YOUR_HF_TOKEN_HERE") {
+    setStatus("Paste your Hugging Face token into popup.js first.", true);
     return;
   }
 
   if (!pastedText) {
-    setStatus("Please paste some text to skim.", true);
+    setStatus("Please paste some text first.", true);
     return;
   }
 
@@ -85,31 +48,50 @@ skimBtn.addEventListener("click", async () => {
   setStatus("Sending request...");
 
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch(API_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
+        "Authorization": `Bearer ${HF_API_KEY}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: MODEL,
-        input: fullPrompt
+        inputs: fullPrompt,
+        parameters: {
+          max_length: 180,
+          min_length: 40,
+          do_sample: false
+        },
+        options: {
+          wait_for_model: true
+        }
       })
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      const errorMessage =
-        data?.error?.message || "Request failed.";
-      throw new Error(errorMessage);
+      const message =
+        data?.error ||
+        data?.message ||
+        "Request failed.";
+      throw new Error(message);
     }
 
-    const resultText =
-      data.output_text ||
-      "No text was returned.";
+    let resultText = "";
 
-    outputEl.textContent = resultText;
+    if (Array.isArray(data) && data[0]?.summary_text) {
+      resultText = data[0].summary_text;
+    } else if (Array.isArray(data) && data[0]?.generated_text) {
+      resultText = data[0].generated_text;
+    } else if (data?.summary_text) {
+      resultText = data.summary_text;
+    } else if (typeof data === "string") {
+      resultText = data;
+    } else {
+      resultText = JSON.stringify(data, null, 2);
+    }
+
+    outputEl.textContent = resultText.trim();
     setStatus("Done.");
   } catch (error) {
     console.error(error);
@@ -117,6 +99,6 @@ skimBtn.addEventListener("click", async () => {
   } finally {
     setLoading(false);
   }
-});
+}
 
-loadSavedKey();
+skimBtn.addEventListener("click", skimText);
